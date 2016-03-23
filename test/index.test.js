@@ -10,9 +10,9 @@ var spy = require('segmentio/spy');
 var store = require('store');
 var tester = require('analytics.js-integration-tester');
 var type = require('component/type@1.0.0');
-var Segment = require('../lib/');
+var StrideSpark = require('../lib/');
 
-describe('Segment.io', function() {
+describe('StrideSpark', function() {
   var segment;
   var analytics;
   var options = {
@@ -29,11 +29,11 @@ describe('Segment.io', function() {
   beforeEach(function() {
     protocol.reset();
     analytics = new Analytics();
-    segment = new Segment(options);
-    analytics.use(Segment);
+    segment = new StrideSpark(options);
+    analytics.use(StrideSpark);
     analytics.use(tester);
     analytics.add(segment);
-    analytics.assert(Segment.global === window);
+    analytics.assert(StrideSpark.global === window);
     resetCookies();
   });
 
@@ -51,17 +51,17 @@ describe('Segment.io', function() {
   }
 
   it('should have the right settings', function() {
-    analytics.compare(Segment, integration('Segment.io')
+    analytics.compare(StrideSpark, integration('StrideSpark')
       .option('apiKey', ''));
   });
 
   it('should always be turned on', function(done) {
     var Analytics = analytics.constructor;
     var ajs = new Analytics();
-    ajs.use(Segment);
+    ajs.use(StrideSpark);
     ajs.initialize({ 'Segment.io': options });
     ajs.ready(function() {
-      var segment = ajs._integrations['Segment.io'];
+      var segment = ajs._integrations.StrideSpark;
       segment.ontrack = spy();
       ajs.track('event', {}, { All: false });
       assert(segment.ontrack.called);
@@ -69,21 +69,21 @@ describe('Segment.io', function() {
     });
   });
 
-  describe('Segment.storage()', function() {
+  describe('StrideSpark.storage()', function() {
     it('should return cookie() when the protocol isnt file://', function() {
-      analytics.assert(Segment.storage(), cookie);
+      analytics.assert(StrideSpark.storage(), cookie);
     });
 
     it('should return store() when the protocol is file://', function() {
-      analytics.assert(Segment.storage(), cookie);
+      analytics.assert(StrideSpark.storage(), cookie);
       protocol('file:');
-      analytics.assert(Segment.storage(), store);
+      analytics.assert(StrideSpark.storage(), store);
     });
 
     it('should return store() when the protocol is chrome-extension://', function() {
-      analytics.assert(Segment.storage(), cookie);
+      analytics.assert(StrideSpark.storage(), cookie);
       protocol('chrome-extension:');
-      analytics.assert(Segment.storage(), store);
+      analytics.assert(StrideSpark.storage(), store);
     });
   });
 
@@ -199,9 +199,9 @@ describe('Segment.io', function() {
       });
 
       it('should add .campaign', function() {
-        Segment.global = { navigator: {}, location: {} };
-        Segment.global.location.search = '?utm_source=source&utm_medium=medium&utm_term=term&utm_content=content&utm_campaign=name';
-        Segment.global.location.hostname = 'localhost';
+        StrideSpark.global = { navigator: {}, location: {} };
+        StrideSpark.global.location.search = '?utm_source=source&utm_medium=medium&utm_term=term&utm_content=content&utm_campaign=name';
+        StrideSpark.global.location.hostname = 'localhost';
         segment.normalize(object);
         analytics.assert(object);
         analytics.assert(object.context);
@@ -211,48 +211,48 @@ describe('Segment.io', function() {
         analytics.assert(object.context.campaign.term === 'term');
         analytics.assert(object.context.campaign.content === 'content');
         analytics.assert(object.context.campaign.name === 'name');
-        Segment.global = window;
+        StrideSpark.global = window;
       });
 
       it('should add .referrer.id and .referrer.type', function() {
-        Segment.global = { navigator: {}, location: {} };
-        Segment.global.location.search = '?utm_source=source&urid=medium';
-        Segment.global.location.hostname = 'localhost';
+        StrideSpark.global = { navigator: {}, location: {} };
+        StrideSpark.global.location.search = '?utm_source=source&urid=medium';
+        StrideSpark.global.location.hostname = 'localhost';
         segment.normalize(object);
         analytics.assert(object);
         analytics.assert(object.context);
         analytics.assert(object.context.referrer);
         analytics.assert(object.context.referrer.id === 'medium');
         analytics.assert(object.context.referrer.type === 'millennial-media');
-        Segment.global = window;
+        StrideSpark.global = window;
       });
 
       it('should add .referrer.id and .referrer.type from cookie', function() {
         segment.cookie('s:context.referrer', '{"id":"baz","type":"millennial-media"}');
-        Segment.global = { navigator: {}, location: {} };
-        Segment.global.location.search = '?utm_source=source';
-        Segment.global.location.hostname = 'localhost';
+        StrideSpark.global = { navigator: {}, location: {} };
+        StrideSpark.global.location.search = '?utm_source=source';
+        StrideSpark.global.location.hostname = 'localhost';
         segment.normalize(object);
         analytics.assert(object);
         analytics.assert(object.context);
         analytics.assert(object.context.referrer);
         analytics.assert(object.context.referrer.id === 'baz');
         analytics.assert(object.context.referrer.type === 'millennial-media');
-        Segment.global = window;
+        StrideSpark.global = window;
       });
 
       it('should add .referrer.id and .referrer.type from cookie when no query is given', function() {
         segment.cookie('s:context.referrer', '{"id":"medium","type":"millennial-media"}');
-        Segment.global = { navigator: {}, location: {} };
-        Segment.global.location.search = '';
-        Segment.global.location.hostname = 'localhost';
+        StrideSpark.global = { navigator: {}, location: {} };
+        StrideSpark.global.location.search = '';
+        StrideSpark.global.location.hostname = 'localhost';
         segment.normalize(object);
         analytics.assert(object);
         analytics.assert(object.context);
         analytics.assert(object.context.referrer);
         analytics.assert(object.context.referrer.id === 'medium');
         analytics.assert(object.context.referrer.type === 'millennial-media');
-        Segment.global = window;
+        StrideSpark.global = window;
       });
     });
   });
@@ -383,7 +383,7 @@ describe('Segment.io', function() {
         protocol('http:');
         segment.send('/i', { userId: 'id' }, function(err, res) {
           if (err) return done(err);
-          assert.equal('http://api.segment.io/v1/i', res.url);
+          assert.equal('http://8jhlytchxh.execute-api.us-west-2.amazonaws.com/prod/i', res.url);
           done();
         });
       });
@@ -392,7 +392,7 @@ describe('Segment.io', function() {
         protocol('https:');
         segment.send('/i', { userId: 'id' }, function(err, res) {
           if (err) return done(err);
-          assert.equal('https://api.segment.io/v1/i', res.url);
+          assert.equal('https://8jhlytchxh.execute-api.us-west-2.amazonaws.com/prod/i', res.url);
           done();
         });
       });
@@ -401,7 +401,7 @@ describe('Segment.io', function() {
         protocol('file:');
         segment.send('/i', { userId: 'id' }, function(err, res) {
           if (err) return done(err);
-          assert.equal('https://api.segment.io/v1/i', res.url);
+          assert.equal('https://8jhlytchxh.execute-api.us-west-2.amazonaws.com/prod/i', res.url);
           done();
         });
       });
@@ -410,7 +410,7 @@ describe('Segment.io', function() {
         protocol('chrome-extension:');
         segment.send('/i', { userId: 'id' }, function(err, res) {
           if (err) return done(err);
-          assert.equal('https://api.segment.io/v1/i', res.url);
+          assert.equal('https://8jhlytchxh.execute-api.us-west-2.amazonaws.com/prod/i', res.url);
           done();
         });
       });
@@ -428,31 +428,31 @@ describe('Segment.io', function() {
       });
 
       it('should persist the cookie even when the hostname is "dev"', function() {
-        Segment.global = { navigator: {}, location: {} };
-        Segment.global.location.href = 'https://dev:300/path';
+        StrideSpark.global = { navigator: {}, location: {} };
+        StrideSpark.global.location.href = 'https://dev:300/path';
         analytics.assert(segment.cookie('foo') == null);
         segment.cookie('foo', 'bar');
         analytics.assert(segment.cookie('foo') === 'bar');
-        Segment.global = window;
+        StrideSpark.global = window;
       });
 
       it('should persist the cookie even when the hostname is "127.0.0.1"', function() {
-        Segment.global = { navigator: {}, location: {} };
-        Segment.global.location.href = 'http://127.0.0.1:3000/';
+        StrideSpark.global = { navigator: {}, location: {} };
+        StrideSpark.global.location.href = 'http://127.0.0.1:3000/';
         analytics.assert(segment.cookie('foo') == null);
         segment.cookie('foo', 'bar');
         analytics.assert(segment.cookie('foo') === 'bar');
-        Segment.global = window;
+        StrideSpark.global = window;
       });
 
       it('should persist the cookie even when the hostname is "app.herokuapp.com"', function() {
-        Segment.global = { navigator: {}, location: {} };
-        Segment.global.location.href = 'https://app.herokuapp.com/about';
-        Segment.global.location.hostname = 'app.herokuapp.com';
+        StrideSpark.global = { navigator: {}, location: {} };
+        StrideSpark.global.location.href = 'https://app.herokuapp.com/about';
+        StrideSpark.global.location.hostname = 'app.herokuapp.com';
         analytics.assert(segment.cookie('foo') == null);
         segment.cookie('foo', 'bar');
         analytics.assert(segment.cookie('foo') === 'bar');
-        Segment.global = window;
+        StrideSpark.global = window;
       });
     });
 
